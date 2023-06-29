@@ -35,14 +35,28 @@ class SignupView(APIView):
     serializer_class = UserSerializer
 
     def post(self, request):
+        email = request.data.get("email", "")
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"email": "이미 가입된 이메일입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        username = request.data.get("username", "")
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {"username": "이미 존재하는 유저네임입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        password = request.data.get("password", "")
+        password2 = request.data.get("password2", "")
+        if password != password2:
+            return Response(
+                {"password2": "비밀번호가 불일치합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "가입완료!"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(
-                {"message": f"${serializer.errors}"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(serializer.errors, status=status.HTTP_403_FORBIDDEN)
 
 
 # 로그인
